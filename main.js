@@ -78,9 +78,9 @@ function calculateNextGen(oldGen, newGen) {
   }
 }
 
-function drawPixel(x, y) {
+function drawPixel(x, y, toErase = false) {
   if (gridA[y] !== undefined && gridA[y][x] !== undefined) {
-    gridA[y][x] = 1
+    gridA[y][x] = toErase ? 0 : 1
   }
 }
 
@@ -120,7 +120,7 @@ function resizeCanvas() {
   c.height = window.innerHeight
 }
 
-function drawLine(x0, y0, x1, y1) {
+function drawLine(x0, y0, x1, y1, toErase = false) {
   const dx = Math.abs(x1 - x0)
   const dy = -Math.abs(y1 - y0)
   const sx = x0 < x1 ? 1 : -1
@@ -128,7 +128,8 @@ function drawLine(x0, y0, x1, y1) {
   let err = dx + dy
 
   while (true) {
-    drawPixel(x0, y0)
+    console.log(toErase)
+    drawPixel(x0, y0, toErase)
     if (x0 === x1 && y0 === y1) break
     let e2 = 2 * err
     if (e2 >= dy) {
@@ -142,23 +143,30 @@ function drawLine(x0, y0, x1, y1) {
   }
 }
 
-function handleMouse({ clientX: x, clientY: y, buttons }, mouseDown = false) {
-  if (buttons !== 1) {
+function getTileCoords(e, canvas, tileSize) {
+  const rect = canvas.getBoundingClientRect()
+  return {
+    x: Math.floor((e.clientX - rect.left) / tileSize),
+    y: Math.floor((e.clientY - rect.top) / tileSize),
+  }
+}
+
+function handleMouse(e, mouseDown = false) {
+  const { x, y } = getTileCoords(e, c, TILE_SIZE)
+  const isRightClick = e.buttons === 2
+
+  if (e.buttons !== 1 && e.buttons !== 2) {
     mouse.x = null
     mouse.y = null
     return
   }
 
-  const rect = c.getBoundingClientRect()
-  const currentX = Math.floor((x - rect.left) / TILE_SIZE)
-  const currentY = Math.floor((y - rect.top) / TILE_SIZE)
-
-  if (mouseDown) drawPixel(currentX, currentY)
+  if (mouseDown) drawPixel(x, y, isRightClick)
   if (mouse.x !== null && mouse.y !== null) {
-    drawLine(mouse.x, mouse.y, currentX, currentY)
+    drawLine(mouse.x, mouse.y, x, y, isRightClick)
   }
-  mouse.x = currentX
-  mouse.y = currentY
+  mouse.x = x
+  mouse.y = y
 }
 
 loop()
@@ -174,3 +182,4 @@ window.addEventListener('keydown', e => {
 window.addEventListener('resize', resizeCanvas)
 c.addEventListener('mousemove', handleMouse)
 c.addEventListener('mousedown', e => handleMouse(e, true))
+c.addEventListener('contextmenu', e => e.preventDefault())
