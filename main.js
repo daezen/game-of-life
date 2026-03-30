@@ -18,8 +18,8 @@ const bounds = {
 }
 let mouse = {
   isDown: false,
-  x: 0,
-  y: 0,
+  x: null,
+  y: null,
 }
 
 function isPointInRect(x, y, { minX, maxX, minY, maxY }) {
@@ -79,11 +79,7 @@ function calculateNextGen(oldGen, newGen) {
   }
 }
 
-function toggleTile(mouseX, mouseY) {
-  const rect = c.getBoundingClientRect()
-  const x = Math.floor((mouseX - rect.left) / TILE_SIZE)
-  const y = Math.floor((mouseY - rect.top) / TILE_SIZE)
-
+function drawPixel(x, y) {
   if (gridA[y] !== undefined && gridA[y][x] !== undefined) {
     gridA[y][x] = 1
   }
@@ -101,7 +97,7 @@ function loop(timestamp) {
   }
 
   if (mouse.isDown && isPaused) {
-    toggleTile(mouse.x, mouse.y)
+    drawPixel(mouse.x, mouse.y)
   }
 
   ctx.clearRect(0, 0, c.width, c.height)
@@ -121,29 +117,63 @@ function draw(grid) {
 }
 
 function resizeCanvas() {
-  const height = window.innerHeight
   c.width = window.innerWidth
   c.height = window.innerHeight
 }
 
-makeArray(ROWS, COLUMNS)
-// seedGrid(gridA)
+function drawLine(x0, y0, x1, y1) {
+  const dx = Math.abs(x1 - x0)
+  const dy = -Math.abs(y1 - y0)
+  const sx = x0 < x1 ? 1 : -1
+  const sy = y0 < y1 ? 1 : -1
+  let err = dx + dy
+
+  while (true) {
+    drawPixel(x0, y0)
+    if (x0 === x1 && y0 === y1) break
+    let e2 = 2 * err
+    if (e2 >= dy) {
+      err += dy
+      x0 += sx
+    }
+    if (e2 <= dx) {
+      err += dx
+      y0 += sy
+    }
+  }
+}
+
 loop()
 resizeCanvas()
 
 window.addEventListener('keydown', e => {
+  if (e.code === 'KeyC') gridA = makeArray(ROWS, COLUMNS)
+  if (e.code === 'KeyR') seedGrid(gridA)
   if (e.code === 'Space') {
     isPaused = isPaused ? false : true
   }
 })
 window.addEventListener('resize', resizeCanvas)
 c.addEventListener('mousemove', e => {
-  console.log(e)
-  mouse.x = e.clientX
-  mouse.y = e.clientY
+  if (e.buttons !== 1) {
+    mouse.x = null
+    mouse.y = null
+    return
+  }
+  const rect = c.getBoundingClientRect()
+  const currentX = Math.floor((e.clientX - rect.left) / TILE_SIZE)
+  const currentY = Math.floor((e.clientY - rect.top) / TILE_SIZE)
+
+  if (mouse.x !== null && mouse.y !== null) {
+    drawLine(mouse.x, mouse.y, currentX, currentY)
+  } else {
+    drawPixel(currentX, currentY)
+  }
+
+  mouse.x = currentX
+  mouse.y = currentY
 })
 c.addEventListener('mouseup', () => {
-  isPaused = false
   mouse.isDown = false
 })
 c.addEventListener('mousedown', () => {
