@@ -17,7 +17,6 @@ const bounds = {
   maxY: ROWS - 1,
 }
 let mouse = {
-  isDown: false,
   x: null,
   y: null,
 }
@@ -143,6 +142,25 @@ function drawLine(x0, y0, x1, y1) {
   }
 }
 
+function handleMouse({ clientX: x, clientY: y, buttons }, mouseDown = false) {
+  if (buttons !== 1) {
+    mouse.x = null
+    mouse.y = null
+    return
+  }
+
+  const rect = c.getBoundingClientRect()
+  const currentX = Math.floor((x - rect.left) / TILE_SIZE)
+  const currentY = Math.floor((y - rect.top) / TILE_SIZE)
+
+  if (mouseDown) drawPixel(currentX, currentY)
+  if (mouse.x !== null && mouse.y !== null) {
+    drawLine(mouse.x, mouse.y, currentX, currentY)
+  }
+  mouse.x = currentX
+  mouse.y = currentY
+}
+
 loop()
 resizeCanvas()
 
@@ -154,29 +172,5 @@ window.addEventListener('keydown', e => {
   }
 })
 window.addEventListener('resize', resizeCanvas)
-c.addEventListener('mousemove', e => {
-  if (e.buttons !== 1) {
-    mouse.x = null
-    mouse.y = null
-    return
-  }
-  const rect = c.getBoundingClientRect()
-  const currentX = Math.floor((e.clientX - rect.left) / TILE_SIZE)
-  const currentY = Math.floor((e.clientY - rect.top) / TILE_SIZE)
-
-  if (mouse.x !== null && mouse.y !== null) {
-    drawLine(mouse.x, mouse.y, currentX, currentY)
-  } else {
-    drawPixel(currentX, currentY)
-  }
-
-  mouse.x = currentX
-  mouse.y = currentY
-})
-c.addEventListener('mouseup', () => {
-  mouse.isDown = false
-})
-c.addEventListener('mousedown', () => {
-  isPaused = true
-  mouse.isDown = true
-})
+c.addEventListener('mousemove', handleMouse)
+c.addEventListener('mousedown', e => handleMouse(e, true))
