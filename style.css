@@ -1,0 +1,23 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: darkslategrey;
+  height: 100vh;
+  overflow: hidden;
+}
+
+canvas {
+  /* outline: 5px solid darkseagreen; */
+  background: #0d1b2a;
+}

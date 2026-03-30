@@ -1,0 +1,152 @@
+const c = document.querySelector('canvas')
+const ctx = c.getContext('2d')
+const ROWS = 100
+const TILE_SIZE = window.innerHeight / ROWS
+const COLUMNS = Math.floor(window.innerWidth / TILE_SIZE)
+const colors = ['black', '#778da9']
+const fps = 15
+const fpsInterval = 1000 / fps
+let lastTime = 0
+let isPaused = true
+let gridA = makeArray(ROWS, COLUMNS)
+let gridB = makeArray(ROWS, COLUMNS)
+const bounds = {
+  minX: 0,
+  maxX: COLUMNS - 1,
+  minY: 0,
+  maxY: ROWS - 1,
+}
+let mouse = {
+  isDown: false,
+  x: 0,
+  y: 0,
+}
+
+function isPointInRect(x, y, { minX, maxX, minY, maxY }) {
+  return x >= minX && x <= maxX && y >= minY && y <= maxY
+}
+
+function makeArray(rows, columns) {
+  const grid = []
+  for (let i = 0; i < rows; i++) {
+    grid[i] = []
+    for (let j = 0; j < columns; j++) {
+      grid[i][j] = 0
+    }
+  }
+
+  return grid
+}
+
+function seedGrid(grid) {
+  for (let i = 0; i < ROWS; i++) {
+    for (let j = 0; j < COLUMNS; j++) {
+      grid[i][j] = Math.random() > 0.85 ? 1 : 0
+    }
+  }
+}
+
+function countNeighbours(y, x, grid) {
+  let count = 0
+  for (let i = -1; i <= 1; i++) {
+    for (let j = -1; j <= 1; j++) {
+      if (i === 0 && j === 0) continue
+      const newY = y + i
+      const newX = x + j
+      if (isPointInRect(newX, newY, bounds)) {
+        count += grid[newY][newX]
+      }
+    }
+  }
+  return count
+}
+
+function calculateNextGen(oldGen, newGen) {
+  for (let i = 0; i < ROWS; i++) {
+    for (let j = 0; j < COLUMNS; j++) {
+      const n = countNeighbours(i, j, oldGen)
+      const isAlive = oldGen[i][j] === 1
+      newGen[i][j] = 0
+
+      if (isAlive && (n === 2 || n === 3)) {
+        newGen[i][j] = 1
+      }
+
+      if (!isAlive && n === 3) {
+        newGen[i][j] = 1
+      }
+    }
+  }
+}
+
+function toggleTile(mouseX, mouseY) {
+  const rect = c.getBoundingClientRect()
+  const x = Math.floor((mouseX - rect.left) / TILE_SIZE)
+  const y = Math.floor((mouseY - rect.top) / TILE_SIZE)
+
+  if (gridA[y] !== undefined && gridA[y][x] !== undefined) {
+    gridA[y][x] = 1
+  }
+}
+
+function loop(timestamp) {
+  requestAnimationFrame(loop)
+  const elapsed = timestamp - lastTime
+  if (!(elapsed > fpsInterval)) return
+  lastTime = timestamp - (elapsed % fpsInterval)
+
+  if (!isPaused) {
+    calculateNextGen(gridA, gridB)
+    ;[gridA, gridB] = [gridB, gridA]
+  }
+
+  if (mouse.isDown && isPaused) {
+    toggleTile(mouse.x, mouse.y)
+  }
+
+  ctx.clearRect(0, 0, c.width, c.height)
+  draw(gridA)
+}
+
+function draw(grid) {
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLUMNS; x++) {
+      const tileValue = grid[y][x]
+      if (tileValue === 1) {
+        ctx.fillStyle = colors[tileValue]
+        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+      }
+    }
+  }
+}
+
+function resizeCanvas() {
+  const height = window.innerHeight
+  c.width = window.innerWidth
+  c.height = window.innerHeight
+}
+
+makeArray(ROWS, COLUMNS)
+// seedGrid(gridA)
+loop()
+resizeCanvas()
+
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space') {
+    isPaused = isPaused ? false : true
+  }
+})
+window.addEventListener('resize', resizeCanvas)
+c.addEventListener('mousemove', e => {
+  console.log(e)
+  mouse.x = e.clientX
+  mouse.y = e.clientY
+})
+c.addEventListener('mouseup', () => {
+  isPaused = false
+  mouse.isDown = false
+})
+c.addEventListener('mousedown', () => {
+  isPaused = true
+  mouse.isDown = true
+})
