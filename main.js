@@ -128,7 +128,6 @@ function drawLine(x0, y0, x1, y1, toErase = false) {
   let err = dx + dy
 
   while (true) {
-    console.log(toErase)
     drawPixel(x0, y0, toErase)
     if (x0 === x1 && y0 === y1) break
     let e2 = 2 * err
