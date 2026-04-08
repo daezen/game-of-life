@@ -184,6 +184,21 @@ function handleMouse(e, mouseDown = false) {
   mouse.y = y
 }
 
+function handleWheel(e) {
+  e.preventDefault()
+  const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9
+  const newZoom = Math.max(1, zoom * zoomFactor)
+
+  const mouseX = e.clientX
+  const mouseY = e.clientY
+
+  offsetX = mouseX - (mouseX - offsetX) * (newZoom / zoom)
+  offsetY = mouseY - (mouseY - offsetY) * (newZoom / zoom)
+  zoom = newZoom
+
+  clampOffset()
+}
+
 function handleKeyboard(e) {
   if (e.code === 'KeyC') clearState()
   if (e.code === 'KeyR') randomize(current)
@@ -197,24 +212,7 @@ function clampOffset() {
   offsetY = Math.min(0, Math.max(offsetY, window.innerHeight - HEIGHT * zoom))
 }
 
-c.addEventListener(
-  'wheel',
-  e => {
-    e.preventDefault()
-    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9
-    const newZoom = Math.max(1, zoom * zoomFactor)
-
-    const mouseX = e.clientX
-    const mouseY = e.clientY
-
-    offsetX = mouseX - (mouseX - offsetX) * (newZoom / zoom)
-    offsetY = mouseY - (mouseY - offsetY) * (newZoom / zoom)
-    zoom = newZoom
-
-    clampOffset()
-  },
-  { passive: false },
-)
+c.addEventListener('wheel', handleWheel, { passive: false })
 
 c.addEventListener('mousedown', e => {
   if (e.button === 1) {
