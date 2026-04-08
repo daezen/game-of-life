@@ -32,6 +32,13 @@ let mouse = {
   y: null,
 }
 
+let zoom = 1
+let offsetX = 0
+let offsetY = 0
+
+let isPanning = false
+let panStart = { x: 0, y: 0 }
+
 function randomize(grid) {
   for (let y = PAD; y < HEIGHT + PAD; y++) {
     const rowOffset = y * W_STRIDE
@@ -55,17 +62,17 @@ function draw(grid) {
 
   ctx.clearRect(0, 0, c.width, c.height)
   octx.putImageData(img, 0, 0)
-  ctx.drawImage(oc, 0, 0, WIDTH * TILE_SIZE, HEIGHT * TILE_SIZE)
-
-  if (mouse.x !== null) {
-    ctx.strokeStyle = 'red'
-    ctx.strokeRect(
-      (mouse.x - PAD) * TILE_SIZE,
-      (mouse.y - PAD) * TILE_SIZE,
-      TILE_SIZE,
-      TILE_SIZE,
-    )
-  }
+  ctx.drawImage(
+    oc,
+    0,
+    0,
+    WIDTH,
+    HEIGHT,
+    offsetX,
+    offsetY,
+    WIDTH * zoom,
+    HEIGHT * zoom,
+  )
 }
 
 function loop(timestamp) {
@@ -148,14 +155,20 @@ function setLine(x0, y0, x1, y1, toErase = false) {
 function getTileCoords(e, canvas) {
   const rect = canvas.getBoundingClientRect()
   return {
-    x: Math.floor((e.clientX - rect.left) / TILE_SIZE) + PAD,
-    y: Math.floor((e.clientY - rect.top) / TILE_SIZE) + PAD,
+    x: Math.floor((e.clientX - rect.left - offsetX) / zoom) + PAD,
+    y: Math.floor((e.clientY - rect.top - offsetY) / zoom) + PAD,
   }
 }
 
 function handleMouse(e, mouseDown = false) {
   const { x, y } = getTileCoords(e, c)
   const isRightClick = e.buttons === 2
+
+  if (isPanning) {
+    offsetX = e.clientX - panStart.x
+    offsetY = e.clientY - panStart.y
+    clampOffset()
+  }
 
   if (e.buttons !== 1 && e.buttons !== 2) {
     mouse.x = null
@@ -178,6 +191,42 @@ function handleKeyboard(e) {
     isPaused = isPaused ? false : true
   }
 }
+
+function clampOffset() {
+  offsetX = Math.min(0, Math.max(offsetX, window.innerWidth - WIDTH * zoom))
+  offsetY = Math.min(0, Math.max(offsetY, window.innerHeight - HEIGHT * zoom))
+}
+
+c.addEventListener(
+  'wheel',
+  e => {
+    e.preventDefault()
+    const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9
+    const newZoom = Math.max(1, zoom * zoomFactor)
+
+    const mouseX = e.clientX
+    const mouseY = e.clientY
+
+    offsetX = mouseX - (mouseX - offsetX) * (newZoom / zoom)
+    offsetY = mouseY - (mouseY - offsetY) * (newZoom / zoom)
+    zoom = newZoom
+
+    clampOffset()
+  },
+  { passive: false },
+)
+
+c.addEventListener('mousedown', e => {
+  if (e.button === 1) {
+    isPanning = true
+    panStart = { x: e.clientX - offsetX, y: e.clientY - offsetY }
+    e.preventDefault()
+  }
+})
+
+c.addEventListener('mouseup', e => {
+  if (e.button === 1) isPanning = false
+})
 
 window.addEventListener('keydown', handleKeyboard)
 window.addEventListener('resize', resizeCanvas)
