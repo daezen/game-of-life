@@ -118,9 +118,7 @@ function clearState() {
 }
 
 function setPixel(x, y, toErase = false) {
-  if (current[y] !== undefined && current[y * W_STRIDE + x] !== undefined) {
-    current[y * W_STRIDE + x] = toErase ? 0 : 1
-  }
+  current[y * W_STRIDE + x] = toErase ? 0 : 1
 }
 
 function setLine(x0, y0, x1, y1, toErase = false) {
