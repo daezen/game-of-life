@@ -1,4 +1,4 @@
-const TILE_SIZE = 2
+const TILE_SIZE = 1
 const PAD = 1
 const WIDTH = Math.floor(window.innerWidth / TILE_SIZE) + PAD
 const HEIGHT = Math.floor(window.innerHeight / TILE_SIZE) + PAD
@@ -88,19 +88,21 @@ function resizeCanvas() {
 
 function nextState(src, dst) {
   for (let y = 1; y <= HEIGHT; y++) {
-    const rowOffset = y * W_STRIDE
-    for (let x = 1; x <= WIDTH; x++) {
-      const i = rowOffset + x
+    const prevRow = (y - 1) * W_STRIDE
+    const currRow = y * W_STRIDE
+    const nextRow = (y + 1) * W_STRIDE
 
+    for (let x = 1; x <= WIDTH; x++) {
+      const i = currRow + x
       const neighbors =
-        src[i - W_STRIDE - 1] +
-        src[i - W_STRIDE] +
-        src[i - W_STRIDE + 1] +
-        src[i - 1] +
-        src[i + 1] +
-        src[i + W_STRIDE - 1] +
-        src[i + W_STRIDE] +
-        src[i + W_STRIDE + 1]
+        src[prevRow + x - 1] +
+        src[prevRow + x] +
+        src[prevRow + x + 1] +
+        src[currRow + x - 1] +
+        src[currRow + x + 1] +
+        src[nextRow + x - 1] +
+        src[nextRow + x] +
+        src[nextRow + x + 1]
 
       const self = src[i]
       if (self === 1) {
