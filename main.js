@@ -1,4 +1,4 @@
-const TILE_SIZE = 0.5
+const TILE_SIZE = 1
 const PAD = 1
 const WIDTH = Math.floor(window.innerWidth / TILE_SIZE) + PAD
 const HEIGHT = Math.floor(window.innerHeight / TILE_SIZE) + PAD
