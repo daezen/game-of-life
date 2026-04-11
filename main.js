@@ -1,4 +1,4 @@
-const TILE_SIZE = 1
+const TILE_SIZE = 0.5
 const PAD = 1
 const WIDTH = Math.floor(window.innerWidth / TILE_SIZE) + PAD
 const HEIGHT = Math.floor(window.innerHeight / TILE_SIZE) + PAD
@@ -82,7 +82,7 @@ function loop(timestamp) {
 
   if (!isPaused && elapsed > fpsInterval) {
     nextState(current, next)
-    ;[current, next] = [next, current]
+      ;[current, next] = [next, current]
     lastTime = timestamp - (elapsed % fpsInterval)
   }
 }
